@@ -1,0 +1,22 @@
+{% extends "main_template.html" %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block title %} Submitted Results {% endblock %}
+{% block content %}
+    {% if form_items %}
+    <h3>Waiting for results for:</h3>
+    <table class="table table-dark table-striped table-bordered table-hover">
+        <tbody>
+            {% for key, val in form_items %}
+            <tr>
+                <th scope="row">{{key}}</th>
+                <td>{{val}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <h3>No data was submitted!</h3>
+    {% endif %}
+{% endblock %}
