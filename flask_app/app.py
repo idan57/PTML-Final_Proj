@@ -4,13 +4,16 @@ import flask
 from flask import Flask, request
 import os
 
-from data_containers.task import Task
+from data_containers.task import Task, TaskResult
 from data_containers.tasks_container import TasksContainer
 
 
-def run_something(form):
-    time.sleep(60)
-    print(form)
+def run_something():
+    time.sleep(10)
+    res = TaskResult()
+    res.result_value = "You are all good!"
+    res.verdict = False
+    return res
 
 
 class MainApp(Flask):
@@ -35,10 +38,16 @@ class MainApp(Flask):
         def task_status(task_name):
             return flask.make_response(str(self._tasks_container.is_task_done(task_name=task_name)))
 
+        @self.route("/TaskResult/<task_name>")
+        def task_result(task_name):
+            return flask.render_template("task_result.html", result=self._tasks_container.get_task_result(task_name))
+
         @self.route("/SubmitMedicalResults", methods=["GET", "POST"])
         def submit_data():
             if request.form:
-                task = Task(name=request.form["Name"], func=run_something, args=(request.form, ))
+                task = Task(name=request.form["Name"], func=run_something)
                 self._tasks_container.add_task(task=task)
-                return flask.render_template("submit_results.html", form_items=request.form.items())
+                return flask.render_template("submit_results.html",
+                                             form_items=request.form.items(),
+                                             task_name=task.name)
             return flask.render_template("submit_results.html")

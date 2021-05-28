@@ -17,6 +17,11 @@ class TasksContainer(object):
         task.start_task()
         self._container[task.name] = task
 
+    def get_task_result(self, task_name):
+        if task_name in self._container:
+            return self._container[task_name].result
+        raise TaskNotFoundException(f"Could not find task: {task_name}")
+
     def is_task_done(self, task_name):
         if task_name in self._container:
             return self._container[task_name].running

@@ -1,0 +1,17 @@
+{% extends "main_template.html" %}
+{% block head %}
+{{ super() }}
+<script src="/static/main.js"></script>
+{% endblock %}
+{% block title %} Submitted Results {% endblock %}
+{% block content %}
+    {% if not result.verdict %}
+    <h3>You are not in danger for sickness :)</h3>
+    {% else %}
+    <h3>You might be in danger for sickness :(</h3>
+    {% endif %}
+    <h4>The result is:</h4>
+    <div>
+        {{ result.result_value }}
+    </div>
+{% endblock %}
