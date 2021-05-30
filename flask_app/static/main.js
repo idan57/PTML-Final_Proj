@@ -52,14 +52,13 @@ window.addEventListener("load", () => {
     let taskNameDom = document.getElementById("taskName");
     if (taskNameDom) {
         let taskName = taskNameDom.textContent;
-        let interval = setInterval(() => {
+        setInterval(() => {
             MakeRequest(
                 `http://127.0.0.1:5000/TaskStatus/${taskName}`,
                 (request) => {
                     let running = request.responseText;
                     if (running !== "True") {
                         console.log("Done!");
-                        // clearInterval(interval);
                         window.location.replace(`http://127.0.0.1:5000/TaskResult/${taskName}`);
                     }
                 }
