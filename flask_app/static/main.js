@@ -48,6 +48,21 @@ function MakeRequest(url, responseHandler, method="GET", data=null, headers={}, 
     return requestor;
 }
 
+
+function AddSymptom() {
+    let selected = document.getElementById("selectSyms").value;
+    let symptoms = document.getElementById("symptoms");
+    if (symptoms.value.split("\n").length > 17) {
+        alert("You are not allowed to add mor then 17 symptoms!");
+        return;
+    }
+    if (symptoms.value) {
+        symptoms.value = `${symptoms.value}\n${selected}`
+    } else {
+        symptoms.value = selected;
+    }
+}
+
 window.addEventListener("load", () => {
     let taskNameDom = document.getElementById("taskName");
     if (taskNameDom) {

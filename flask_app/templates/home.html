@@ -1,19 +1,28 @@
 {% extends "main_template.html" %}
 {% block head %}
 {{ super() }}
+<script src="/static/main.js"></script>
 {% endblock %}
 {% block title %} Home {% endblock %}
 {% block content %}
     <h4>Here you should enter your medical data by the fields below</h4>
+    <select class="form-select" multiple aria-label="multiple select example" id="selectSyms">
+
+            {% for symptom in symptoms %}
+            <option value="{{symptom}}">{{symptom}}</option>
+            {% endfor %}
+
+    </select>
+    <button class="btn btn-primary my-3" onclick="AddSymptom()">Add Symptom</button>
     <form name="medData" action="/SubmitMedicalResults" method="POST">
-      <div class="form-group my-2">
-        <label for="name">Name</label>
-        <input class="form-control" type="text" name="Name" id="name" placeholder="Enter Your Name">
-      </div>
-      <div class="form-group my-2">
-        <label for="surname">Surname</label>
-        <input class="form-control" type="text" name="Surname" id="surname" placeholder="Enter Your Surname">
-      </div>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input name="name" type="text" class="form-control" id="name" placeholder="Your Name">
+        </div>
+        <div class="form-group">
+            <label for="symptoms">Symptoms</label>
+            <textarea name="symptoms" class="form-control" id="symptoms" rows="3"></textarea>
+        </div>
       <button type="submit" class="btn btn-primary my-3">Submit</button>
     </form>
 {% endblock %}

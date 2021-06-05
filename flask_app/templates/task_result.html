@@ -5,13 +5,29 @@
 {% endblock %}
 {% block title %} Submitted Results {% endblock %}
 {% block content %}
-    {% if not result.verdict %}
-    <h3>You are not in danger for sickness :)</h3>
+    {% if not sickness.verdict %}
+    <h3 class="text-center">You are not in danger for sickness :)</h3>
     {% else %}
-    <h3>You might be in danger for sickness :(</h3>
-    {% endif %}
-    <h4>The result is:</h4>
+    <h3 class="text-center">You might be in danger for sickness :(</h3>
+    <h4>You might be sick with the following:</h4>
     <div>
-        {{ result.result_value }}
+        {{ sickness.result_value }}
     </div>
+    <h4>Description of the disease:</h4>
+    <div>
+        {{ description }}
+    </div>
+    <h4>Precautions of the disease:</h4>
+    <table class="table table-dark table-striped table-bordered table-hover">
+        <tbody>
+            {% for key, val in precautions %}
+            <tr>
+                <th scope="row">{{key}}</th>
+                <td>{{val}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
 {% endblock %}
