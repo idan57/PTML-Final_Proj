@@ -63,12 +63,19 @@ class MainApp(Flask):
         @self.route("/TaskResult/<task_name>")
         def task_result(task_name):
             sickness = self._tasks_container.get_task_result(task_name)
-            description = self.diseases_precautions.descriptions[sickness.result_value]
-            precautions = self.diseases_precautions.precautions[sickness.result_value]
-            final_precautions = []
-            for key, val in precautions.items():
-                val = val[0].upper() + val[1:]
-                final_precautions.append((key.replace("_", ""), val))
+            description = None
+            final_precautions = None
+            if sickness.result_value in self.diseases_precautions.descriptions:
+                description = self.diseases_precautions.descriptions[sickness.result_value]
+            if sickness.result_value in self.diseases_precautions.precautions:
+                precautions = self.diseases_precautions.precautions[sickness.result_value]
+                final_precautions = []
+                num_of_precaution = 1
+                for key, val in precautions.items():
+                    if val:
+                        val = str(val)[0].upper() + str(val)[1:]
+                        final_precautions.append((f"Precaution {num_of_precaution}", val))
+                        num_of_precaution += 1
             return flask.render_template("task_result.html", sickness=sickness, description=description,
                                          precautions=final_precautions)
 

@@ -66,7 +66,6 @@ class DiseasesModel(object):
 
         values = self.symptoms_to_vals(symptoms=symptoms_variations)
         models = [self.decision_tree_model, self.bagging_model, self.random_forest_model, self.svc_model]
-        # models = [self.decision_tree_model]
         predictions = []
 
         for model in models:

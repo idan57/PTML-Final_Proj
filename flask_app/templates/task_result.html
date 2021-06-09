@@ -13,10 +13,13 @@
     <div>
         {{ sickness.result_value }}
     </div>
+    {% if description %}
     <h4>Description of the disease:</h4>
     <div>
         {{ description }}
     </div>
+    {% endif %}
+    {% if precautions %}
     <h4>Precautions of the disease:</h4>
     <table class="table table-dark table-striped table-bordered table-hover">
         <tbody>
@@ -28,6 +31,7 @@
             {% endfor %}
         </tbody>
     </table>
+    {% endif %}
     {% endif %}
 
 {% endblock %}

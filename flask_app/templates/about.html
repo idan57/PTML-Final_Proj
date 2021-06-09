@@ -4,4 +4,31 @@
 {% endblock %}
 {% block title %} About {% endblock %}
 {% block content %}
+<div class="container">
+    <p>
+        This app will allow you to enter any symptoms you have and will let you know in which sickness you might be sick
+        in.
+        <br>
+        We did the learning for this with the following dataset: <a href="https://www.kaggle.com/itachi9604/disease-symptom-description-dataset">https://www.kaggle
+        .com/itachi9604/disease-symptom-description-dataset</a>
+        <br>
+        The models we used are:
+        <ul>
+          <li>DecisionTreeClassifier</li>
+          <li>BaggingClassifier with 1000 estimators</li>
+          <li>RandomForestClassifier with 1000 estimators</li>
+          <li>SVC</li>
+        </ul>
+        <br>
+        <div class="d-flex justify-content-center">
+            <a href="https://www.linkedin.com/in/idan-cohen-b2b648199/">
+                <img src="https://media-exp3.licdn.com/dms/image/C5603AQGcssVdDfp4Ew/profile-displayphoto-shrink_200_200/0/1579098939611?e=1628726400&v=beta&t=37nFYHilCYL3w8qQ0cLUBDG4faXW5v3S1hf8Mgy89rI">
+            </a>
+            <a href="https://www.linkedin.com/in/nerya-aberdam/">
+                <img src="https://media-exp3.licdn.com/dms/image/C4D03AQEd2ehyOP7fXQ/profile-displayphoto-shrink_200_200/0/1595271618521?e=1628726400&v=beta&t=zeCtzVcc9_BlRabKOYnBfGambtbeohXvFywoHdfWlzo">
+            </a>
+        </div>
+
+    </p>
+</div>
 {% endblock %}
