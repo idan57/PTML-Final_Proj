@@ -15,11 +15,22 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 class PickledModelDoesNotExistException(Exception):
+    """
+    Exception class that will be thrown in case we don't find some pickled file for a model
+    """
     pass
 
 
 class DiseasesModel(object):
+    """
+    A model for training and fitting the diseases data
+    """
+
     def __init__(self, app: Flask):
+        """
+        :param app: the flask app for logging purposes
+        :type app: Flask
+        """
         curr_dir = os.path.dirname(__file__)
         self.data_path = os.path.join(curr_dir, "data")
         self.models_path = os.path.join(curr_dir, "models")
@@ -55,13 +66,24 @@ class DiseasesModel(object):
         self._setup()
 
     def train(self):
+        """
+        Training our model
+        """
         try:
             self._load_models_from_files()
         except PickledModelDoesNotExistException:
             print("No models were trained in the past, starting training...")
             self._train()
 
-    def predict(self, symptoms):
+    def predict(self, symptoms: list) -> str:
+        """
+        Predicting the disease by given symptoms
+
+        :param symptoms: symptoms for a disease
+        :type symptoms: list
+        :return: prediction for the disease
+        :rtype: str
+        """
         symptoms_variations = self._get_symptoms_variations(symptoms)
 
         values = self.symptoms_to_vals(symptoms=symptoms_variations)
@@ -87,6 +109,9 @@ class DiseasesModel(object):
         return combinations
 
     def save_model(self):
+        """
+        Pickles all model into files
+        """
         self._pickle(self.decision_tree_path, self.decision_tree_model)
         self._pickle(self.random_forest_path, self.random_forest_model)
         self._pickle(self.bagging_path, self.bagging_model)
@@ -136,13 +161,21 @@ class DiseasesModel(object):
         self.log_train_res(self.svc_model)
 
     def log_train_res(self, model):
-        print(f"Train accuracy for DecisionTreeClassifier: "
+        print(f"Train accuracy for {model.__class__}: "
               f"{accuracy_score(self.y_train, model.predict(self.x_train))}")
 
-        print(f"Test accuracy for DecisionTreeClassifier: "
+        print(f"Test accuracy for {model.__class__}: "
               f"{accuracy_score(self.y_test, model.predict(self.x_test))}")
 
     def symptoms_to_vals(self, symptoms: List):
+        """
+        Fitting the symptoms into numbered values
+
+        :param symptoms: symptoms to encode
+        :type symptoms: list
+        :return: encoded symptoms
+        :rtype: np.ndarray
+        """
         print(f"Received symptoms: {symptoms}")
         for i in range(len(symptoms)):
             if symptoms[i]:

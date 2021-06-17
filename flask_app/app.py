@@ -23,6 +23,11 @@ class MainApp(Flask):
     model: DiseasesModel
 
     def __init__(self, import_name="MainApp", *args, **kwargs):
+        """
+        :param import_name: name of the app
+        :param args: any arguments for the app
+        :param kwargs: any kwargs for the app
+        """
         os.chdir(os.path.dirname(__file__))
         super().__init__(import_name, *args, **kwargs)
         self._tasks_container = TasksContainer()
@@ -32,6 +37,9 @@ class MainApp(Flask):
         self._setup()
 
     def run(self, host=None, port=None, debug=None, load_dotenv=True, **options):
+        """
+        Start the app
+        """
         self.model = DiseasesModel(app=self)
         self.model.train()
         self.model.save_model()
@@ -39,7 +47,14 @@ class MainApp(Flask):
         self.symptoms = [sym.replace("_", " ") for sym in self.symptoms]
         super().run(host=None, port=None, debug=None, load_dotenv=True, **options)
 
-    def pred_model(self, symptoms):
+    def pred_model(self, symptoms: list):
+        """
+        Make a prediction for given symptoms
+        :param symptoms: list of symptoms
+        :type symptoms: list
+        :return: prediction for a disease
+        :rtype: str
+        """
         prediction = self.model.predict(symptoms)
         self.logger.info(f"The prediction is: {prediction}")
         res = TaskResult()
@@ -50,18 +65,34 @@ class MainApp(Flask):
     def _setup(self):
         @self.route("/")
         def home():
+            """
+            :return: Home page
+            """
             return flask.render_template("home.html", symptoms=self.symptoms)
 
         @self.route("/About")
         def about():
+            """
+            :return: About page
+            """
             return flask.render_template("about.html")
 
         @self.route("/TaskStatus/<task_name>")
         def task_status(task_name):
+            """
+            :param task_name: task name
+            :type task_name: str
+            :return: status of the task
+            """
             return flask.make_response(str(self._tasks_container.is_task_done(task_name=task_name)))
 
         @self.route("/TaskResult/<task_name>")
         def task_result(task_name):
+            """
+            :param task_name: task name
+            :type task_name: str
+            :return: the task's result page
+            """
             sickness = self._tasks_container.get_task_result(task_name)
             description = None
             final_precautions = None
@@ -81,6 +112,11 @@ class MainApp(Flask):
 
         @self.route("/SubmitMedicalResults", methods=["GET", "POST"])
         def submit_data():
+            """
+            Submitting data for prediction
+
+            :return: submission page
+            """
             if request.form:
                 symptoms = request.form["symptoms"].replace("\r", "").split("\n")
                 form = dict(request.form)
