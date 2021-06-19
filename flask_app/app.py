@@ -40,7 +40,7 @@ class MainApp(Flask):
         """
         Start the app
         """
-        self.model = DiseasesModel(app=self)
+        self.model = DiseasesModel()
         self.model.train()
         self.model.save_model()
         self.symptoms = self.model.symptoms_to_weights.keys()

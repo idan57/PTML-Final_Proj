@@ -1,6 +1,9 @@
+import json
 import os
 import pickle
 from collections import Counter
+from multiprocessing import Pool
+import multiprocessing
 from typing import List
 
 import pandas as pd
@@ -8,10 +11,28 @@ import numpy as np
 from flask import Flask
 from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+
+tune_options = {
+    "DecisionTreeClassifier": {
+        "criterion": ["gini", "entropy"],
+        "splitter": ["best", "random"],
+        "max_depth": [None, 10, 20, 30]
+    },
+    "RandomForestClassifier": {
+        "n_estimators": [100, 500, 1000],
+        "criterion": ["gini", "entropy"],
+        "warm_start": [True, False]
+    },
+    "SVC": {
+        "kernel": ["linear", "rbf", "poly"],
+        "gamma": ["scale", "auto"],
+        "C": [0.1, 1, 10]
+    }
+}
 
 
 class PickledModelDoesNotExistException(Exception):
@@ -26,7 +47,7 @@ class DiseasesModel(object):
     A model for training and fitting the diseases data
     """
 
-    def __init__(self, app: Flask):
+    def __init__(self):
         """
         :param app: the flask app for logging purposes
         :type app: Flask
@@ -44,8 +65,8 @@ class DiseasesModel(object):
         self.diseases = []
         self.num_of_diseases = 0
         self.max_weight = 0
-        self.app = app
         self.zero_mappings = {}
+        self._tuned = {}
 
         self.x_train = None
         self.x_test = None
@@ -73,7 +94,55 @@ class DiseasesModel(object):
             self._load_models_from_files()
         except PickledModelDoesNotExistException:
             print("No models were trained in the past, starting training...")
+            self._tune()
             self._train()
+
+    def _tune_one(self, classifier, classifier_name):
+        print(f"---------- Started tuning with {classifier_name} ----------")
+        grid_search_cv = RandomizedSearchCV(classifier,
+                                            tune_options[classifier_name],
+                                            cv=5,
+                                            scoring="accuracy",
+                                            verbose=2,
+                                            n_jobs=5)
+        grid_search_cv.fit(self.x_train, self.y_train)
+        print(f"---------- Ended tuning with {classifier_name} ----------")
+        return grid_search_cv.best_params_, classifier_name
+
+    def _tune(self):
+        tuned_data_json = os.path.join(os.path.dirname(__file__), "tuned_data.json")
+        if os.path.isfile(tuned_data_json):
+            with open(tuned_data_json, "r") as f:
+                self._tuned = json.load(f)
+        else:
+            pool = Pool(processes=4)
+            procs = []
+            classifiers = {
+                "DecisionTreeClassifier": DecisionTreeClassifier(),
+                "BaggingClassifier": BaggingClassifier(n_jobs=3),
+                "RandomForestClassifier": RandomForestClassifier(),
+                "SVC": SVC()
+            }
+            for classifier_name, classifier in classifiers.items():
+                procs.append((classifier_name, pool.apply_async(self._tune_one, (classifier, classifier_name))))
+
+            while True:
+                i = 0
+                num_procs = len(procs)
+                while i < num_procs:
+                    try:
+                        best_res, classifier_name = procs[i][1].get(1)
+                        num_procs -= 1
+                        del procs[i]
+                        self._tuned[classifier_name] = best_res
+                    except multiprocessing.TimeoutError:
+                        print(f"Still waiting... remaining {num_procs} processes.\nCurrently checked: {procs[i][0]}")
+                    i += 1
+
+                if num_procs == 0:
+                    break
+            with open(tuned_data_json, "w") as f:
+                json.dump(self._tuned, f, sort_keys=True, indent=4)
 
     def predict(self, symptoms: list) -> str:
         """
@@ -140,13 +209,13 @@ class DiseasesModel(object):
             with open(path, "wb") as pickled_file:
                 pickle.dump(model, pickled_file)
         else:
-            self.app.logger.warn(f"Requested pickling to {path} was canceled because the model is None")
+            print(f"Requested pickling to {path} was canceled because the model is None")
 
     def _train(self):
-        self.decision_tree_model = DecisionTreeClassifier()
-        self.bagging_model = BaggingClassifier(n_estimators=1000)
-        self.random_forest_model = RandomForestClassifier(n_estimators=1000)
-        self.svc_model = SVC()
+        self.decision_tree_model = DecisionTreeClassifier(**self._tuned["DecisionTreeClassifier"])
+        self.bagging_model = BaggingClassifier(n_jobs=3)
+        self.random_forest_model = RandomForestClassifier(**self._tuned["RandomForestClassifier"])
+        self.svc_model = SVC(**self._tuned["SVC"])
 
         self.decision_tree_model.fit(self.x_train, self.y_train)
         self.log_train_res(self.decision_tree_model)

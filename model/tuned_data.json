@@ -1,0 +1,17 @@
+{
+    "DecisionTreeClassifier": {
+        "criterion": "entropy",
+        "max_depth": null,
+        "splitter": "random"
+    },
+    "RandomForestClassifier": {
+        "criterion": "entropy",
+        "n_estimators": 1000,
+        "warm_start": false
+    },
+    "SVC": {
+        "C": 10,
+        "gamma": "auto",
+        "kernel": "rbf"
+    }
+}
