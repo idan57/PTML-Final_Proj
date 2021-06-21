@@ -1,12 +1,26 @@
 {
+    "AdaBoostClassifier": {
+        "learning_rate": 0.01,
+        "n_estimators": 100
+    },
     "DecisionTreeClassifier": {
-        "criterion": "entropy",
+        "criterion": "gini",
         "max_depth": null,
         "splitter": "random"
     },
+    "KNN": {
+        "n_neighbors": 5,
+        "weights": "distance"
+    },
+    "LogisticRegression": {
+        "C": 10,
+        "max_iter": 100,
+        "solver": "newton-cg",
+        "warm_start": false
+    },
     "RandomForestClassifier": {
-        "criterion": "entropy",
-        "n_estimators": 1000,
+        "criterion": "gini",
+        "n_estimators": 100,
         "warm_start": false
     },
     "SVC": {
