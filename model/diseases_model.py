@@ -8,10 +8,13 @@ from typing import List
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from flask import Flask
-from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, AdaBoostClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -31,7 +34,22 @@ tune_options = {
         "kernel": ["linear", "rbf", "poly"],
         "gamma": ["scale", "auto"],
         "C": [0.1, 1, 10]
+    },
+    "KNN": {
+        "n_neighbors": [5, 7, 11],
+        "weights": ["uniform", "distance"],
+    },
+    "LogisticRegression": {
+        "C": [0.1, 1, 10],
+        "solver": ["newton-cg", "lbfgs", "saga"],
+        "warm_start": [True, False],
+        "max_iter": [100, 120, 150]
+    },
+    "AdaBoostClassifier": {
+        "learning_rate": [0.01, 0.9, 1],
+        "n_estimators": [50, 100]
     }
+
 }
 
 
@@ -78,11 +96,17 @@ class DiseasesModel(object):
         self.bagging_path = os.path.join(self.models_path, "BaggingClassifier")
         self.random_forest_path = os.path.join(self.models_path, "RandomForestClassifier")
         self.svc_path = os.path.join(self.models_path, "SVC")
+        self.knn_path = os.path.join(self.models_path, "KNN")
+        self.lr_path = os.path.join(self.models_path, "LogisticRegression")
+        self.ada_path = os.path.join(self.models_path, "AdaBoostClassifier")
 
         self.decision_tree_model = None
         self.bagging_model = None
         self.random_forest_model = None
         self.svc_model = None
+        self.knn_model = None
+        self.logistic_regression_model = None
+        self.ada_model = None
 
         self._setup()
 
@@ -92,6 +116,10 @@ class DiseasesModel(object):
         """
         try:
             self._load_models_from_files()
+            classifiers = [self.svc_model, self.decision_tree_model, self.bagging_model, self.random_forest_model,
+                           self.ada_model, self.logistic_regression_model, self.knn_model]
+            for clasiffier in classifiers:
+                self.log_train_res(clasiffier)
         except PickledModelDoesNotExistException:
             print("No models were trained in the past, starting training...")
             self._tune()
@@ -115,14 +143,16 @@ class DiseasesModel(object):
             with open(tuned_data_json, "r") as f:
                 self._tuned = json.load(f)
         else:
-            pool = Pool(processes=4)
             procs = []
             classifiers = {
                 "DecisionTreeClassifier": DecisionTreeClassifier(),
-                "BaggingClassifier": BaggingClassifier(n_jobs=3),
                 "RandomForestClassifier": RandomForestClassifier(),
-                "SVC": SVC()
+                "SVC": SVC(),
+                "KNN": KNeighborsClassifier(),
+                "LogisticRegression": LogisticRegression(multi_class="multinomial"),
+                "AdaBoostClassifier": AdaBoostClassifier(),
             }
+            pool = Pool(processes=3)
             for classifier_name, classifier in classifiers.items():
                 procs.append((classifier_name, pool.apply_async(self._tune_one, (classifier, classifier_name))))
 
@@ -153,10 +183,12 @@ class DiseasesModel(object):
         :return: prediction for the disease
         :rtype: str
         """
+        symptoms = set(symptoms)
         symptoms_variations = self._get_symptoms_variations(symptoms)
 
         values = self.symptoms_to_vals(symptoms=symptoms_variations)
-        models = [self.decision_tree_model, self.bagging_model, self.random_forest_model, self.svc_model]
+        models = [self.decision_tree_model, self.bagging_model, self.random_forest_model, self.svc_model,
+                  self.ada_model, self.knn_model, self.logistic_regression_model]
         predictions = []
 
         for model in models:
@@ -185,9 +217,13 @@ class DiseasesModel(object):
         self._pickle(self.random_forest_path, self.random_forest_model)
         self._pickle(self.bagging_path, self.bagging_model)
         self._pickle(self.svc_path, self.svc_model)
+        self._pickle(self.knn_path, self.knn_model)
+        self._pickle(self.lr_path, self.logistic_regression_model)
+        self._pickle(self.ada_path, self.ada_model)
 
     def _load_models_from_files(self):
-        paths = [self.decision_tree_path, self.bagging_path, self.random_forest_path, self.svc_path]
+        paths = [self.decision_tree_path, self.bagging_path, self.random_forest_path, self.svc_path,
+                 self.knn_path, self.ada_path, self.lr_path]
 
         for path in paths:
             if not os.path.isfile(path):
@@ -197,6 +233,9 @@ class DiseasesModel(object):
         self.bagging_model = DiseasesModel._get_unpickled(self.bagging_path)
         self.random_forest_model = DiseasesModel._get_unpickled(self.random_forest_path)
         self.svc_model = DiseasesModel._get_unpickled(self.svc_path)
+        self.knn_model = DiseasesModel._get_unpickled(self.knn_path)
+        self.logistic_regression_model = DiseasesModel._get_unpickled(self.lr_path)
+        self.ada_model = DiseasesModel._get_unpickled(self.ada_path)
 
     @staticmethod
     def _get_unpickled(path: str):
@@ -216,6 +255,10 @@ class DiseasesModel(object):
         self.bagging_model = BaggingClassifier(n_jobs=3)
         self.random_forest_model = RandomForestClassifier(**self._tuned["RandomForestClassifier"])
         self.svc_model = SVC(**self._tuned["SVC"])
+        self.knn_model = KNeighborsClassifier(**self._tuned["KNN"])
+        self.logistic_regression_model = LogisticRegression(multi_class='multinomial',
+                                                            **self._tuned["LogisticRegression"])
+        self.ada_model = AdaBoostClassifier(**self._tuned["AdaBoostClassifier"])
 
         self.decision_tree_model.fit(self.x_train, self.y_train)
         self.log_train_res(self.decision_tree_model)
@@ -229,12 +272,30 @@ class DiseasesModel(object):
         self.svc_model.fit(self.x_train, self.y_train)
         self.log_train_res(self.svc_model)
 
-    def log_train_res(self, model):
-        print(f"Train accuracy for {model.__class__}: "
-              f"{accuracy_score(self.y_train, model.predict(self.x_train))}")
+        self.knn_model.fit(self.x_train, self.y_train)
+        self.log_train_res(self.knn_model)
 
-        print(f"Test accuracy for {model.__class__}: "
-              f"{accuracy_score(self.y_test, model.predict(self.x_test))}")
+        self.logistic_regression_model.fit(self.x_train, self.y_train)
+        self.log_train_res(self.logistic_regression_model)
+
+        self.ada_model.fit(self.x_train, self.y_train)
+        self.log_train_res(self.ada_model)
+
+    def log_train_res(self, model):
+        from sklearn.metrics import plot_confusion_matrix
+        pred_train = model.predict(self.x_train)
+        pred_test = model.predict(self.x_test)
+
+        print(f"Train accuracy for {model.__class__.__name__}: {accuracy_score(self.y_train, pred_train)}")
+        print(f"Test accuracy for {model.__class__.__name__}: {accuracy_score(self.y_test, pred_test)}")
+
+        print(f"Test Confusion Matrix for {model.__class__.__name__}:\n{confusion_matrix(self.y_test, pred_test)}")
+        fig, ax = plt.subplots(figsize=(30, 30))
+        display_labels = [f"{i}" for i in range(len(self.diseases))]
+        disp = plot_confusion_matrix(model, self.x_test, self.y_test, display_labels=display_labels, ax=ax,
+                                     cmap=plt.cm.Blues)
+        disp.ax_.set_title(f"Confusion Matrix - {model.__class__.__name__}")
+        fig.savefig(model.__class__.__name__)
 
     def symptoms_to_vals(self, symptoms: List):
         """
