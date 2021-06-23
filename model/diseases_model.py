@@ -66,10 +66,6 @@ class DiseasesModel(object):
     """
 
     def __init__(self):
-        """
-        :param app: the flask app for logging purposes
-        :type app: Flask
-        """
         curr_dir = os.path.dirname(__file__)
         self.data_path = os.path.join(curr_dir, "data")
         self.models_path = os.path.join(curr_dir, "models")
