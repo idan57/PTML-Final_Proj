@@ -1,0 +1,21 @@
+{% extends "main_template.html" %}
+{% block head %}
+{{ super() }}
+<script src="/static/main.js"></script>
+{% endblock %}
+{% block title %} Home {% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-center">
+        <h4>Here you should enter the disease you would like to search for</h4>
+    </div>
+    <div class="d-flex justify-content-center">
+        <form class="form-inline" name="medData" action="/SearchDiseaseResult" method="POST">
+            <div class="form-group">
+                <input name="disease_name" type="text" class="form-control form-control-lg" id="disease_name" placeholder="Disease Name">
+            </div>
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-primary my-3">Search</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -9,7 +9,6 @@ from typing import List
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from flask import Flask
 from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -278,6 +277,11 @@ class DiseasesModel(object):
         self.log_train_res(self.ada_model)
 
     def log_train_res(self, model):
+        """
+        Log data regarding the training result
+
+        :param model: the trained model
+        """
         from sklearn.metrics import plot_confusion_matrix
         pred_train = model.predict(self.x_train)
         pred_test = model.predict(self.x_test)

@@ -22,6 +22,7 @@ class DiseasesPrecautions(object):
         result = {}
 
         for index, row in data_csv.iterrows():
-            result[row[key_col_name]] = row[value_cols_name]
+            key = row[key_col_name].lower()
+            result[key] = row[value_cols_name]
 
         return result

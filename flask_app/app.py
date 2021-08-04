@@ -77,6 +77,13 @@ class MainApp(Flask):
             """
             return flask.render_template("about.html")
 
+        @self.route("/SearchDisease")
+        def search():
+            """
+            :return: Search Disease page
+            """
+            return flask.render_template("search.html")
+
         @self.route("/TaskStatus/<task_name>")
         def task_status(task_name):
             """
@@ -97,9 +104,9 @@ class MainApp(Flask):
             description = None
             final_precautions = None
             if sickness.result_value in self.diseases_precautions.descriptions:
-                description = self.diseases_precautions.descriptions[sickness.result_value]
+                description = self.diseases_precautions.descriptions[sickness.result_value.lower()]
             if sickness.result_value in self.diseases_precautions.precautions:
-                precautions = self.diseases_precautions.precautions[sickness.result_value]
+                precautions = self.diseases_precautions.precautions[sickness.result_value.lower()]
                 final_precautions = []
                 num_of_precaution = 1
                 for key, val in precautions.items():
@@ -109,6 +116,34 @@ class MainApp(Flask):
                         num_of_precaution += 1
             return flask.render_template("task_result.html", sickness=sickness, description=description,
                                          precautions=final_precautions)
+
+        @self.route("/SearchDiseaseResult", methods=["GET", "POST"])
+        def search_disease_result():
+            """
+            Submitting data for prediction
+
+            :return: submission page
+            """
+            if request.form:
+                disease_name = request.form["disease_name"]
+                dis_lower = disease_name.lower()
+                if dis_lower in self.diseases_precautions.descriptions:
+                    description = self.diseases_precautions.descriptions[dis_lower]
+                    precautions = None
+                    if dis_lower in self.diseases_precautions.precautions:
+                        precautions = self.diseases_precautions.precautions[dis_lower]
+                        prs_only = []
+                        for prec in precautions:
+                            prs_only.append(prec)
+                        precautions = ", ".join(prs_only)
+                    return flask.render_template("search_result.html",
+                                                 description=description,
+                                                 disease_name=disease_name,
+                                                 precautions=precautions,
+                                                 invalid_disease=None)
+                else:
+                    return flask.render_template("search_result.html", invalid_disease=disease_name)
+            return flask.render_template("submit_results.html")
 
         @self.route("/SubmitMedicalResults", methods=["GET", "POST"])
         def submit_data():
