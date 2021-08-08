@@ -13,14 +13,18 @@
     <div>
         {{ sickness.result_value }}
     </div>
-    {% if description %}
     <h4>Description of the disease:</h4>
+    {% if description %}
     <div>
         {{ description }}
     </div>
+    {% else %}
+    <div>
+        <b>NO DESCRIPTION AVAILABLE!</b>
+    </div>
     {% endif %}
-    {% if precautions %}
     <h4>Precautions of the disease:</h4>
+    {% if precautions %}
     <table class="table table-dark table-striped table-bordered table-hover">
         <tbody>
             {% for key, val in precautions %}
@@ -31,6 +35,10 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <div>
+        <b>NO PRECAUTIONS AVAILABLE!</b>
+    </div>
     {% endif %}
     {% endif %}
 

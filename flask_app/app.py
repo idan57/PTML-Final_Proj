@@ -1,3 +1,4 @@
+import logging
 import time
 
 import flask
@@ -68,6 +69,7 @@ class MainApp(Flask):
             """
             :return: Home page
             """
+            logging.info("Getting Home Page")
             return flask.render_template("home.html", symptoms=self.symptoms)
 
         @self.route("/About")
@@ -75,6 +77,7 @@ class MainApp(Flask):
             """
             :return: About page
             """
+            logging.info("Getting About Page")
             return flask.render_template("about.html")
 
         @self.route("/SearchDisease")
@@ -82,6 +85,7 @@ class MainApp(Flask):
             """
             :return: Search Disease page
             """
+            logging.info("Getting Search Disease Page")
             return flask.render_template("search.html")
 
         @self.route("/TaskStatus/<task_name>")
@@ -91,6 +95,7 @@ class MainApp(Flask):
             :type task_name: str
             :return: status of the task
             """
+            logging.info(f"Getting Task Status for: {task_name}")
             return flask.make_response(str(self._tasks_container.is_task_done(task_name=task_name)))
 
         @self.route("/TaskResult/<task_name>")
@@ -100,6 +105,7 @@ class MainApp(Flask):
             :type task_name: str
             :return: the task's result page
             """
+            logging.info(f"Getting Task Result for: {task_name}")
             sickness = self._tasks_container.get_task_result(task_name)
             description = None
             final_precautions = None
@@ -124,6 +130,7 @@ class MainApp(Flask):
 
             :return: submission page
             """
+            logging.info("Searching for disease...")
             if request.form:
                 disease_name = request.form["disease_name"]
                 dis_lower = disease_name.lower()
@@ -136,6 +143,7 @@ class MainApp(Flask):
                         for prec in precautions:
                             prs_only.append(prec)
                         precautions = ", ".join(prs_only)
+                    logging.info(f"Found disease: {disease_name}")
                     return flask.render_template("search_result.html",
                                                  description=description,
                                                  disease_name=disease_name,
@@ -152,6 +160,7 @@ class MainApp(Flask):
 
             :return: submission page
             """
+            logging.info("Submitting symptoms for check...")
             if request.form:
                 symptoms = request.form["symptoms"].replace("\r", "").split("\n")
                 form = dict(request.form)
@@ -159,7 +168,9 @@ class MainApp(Flask):
                 symptoms = [symptom.replace(" ", "_") for symptom in symptoms]
                 task = Task(name=request.form["name"], func=self.pred_model, args=(symptoms, ))
                 self._tasks_container.add_task(task=task)
+                logging.info("Submitted")
                 return flask.render_template("submit_results.html",
                                              form_items=form.items(),
                                              task_name=task.name)
+            logging.info("No symptoms found")
             return flask.render_template("submit_results.html")

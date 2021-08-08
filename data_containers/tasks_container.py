@@ -1,3 +1,4 @@
+import logging
 from typing import Dict
 
 from data_containers.task import Task
@@ -24,6 +25,7 @@ class TasksContainer(object):
         Add new task to container
         :param task: task to add
         """
+        logging.info(f"Adding the task '{task.name}' to the Tasks Container")
         task.start_task()
         self._container[task.name] = task
 
@@ -34,8 +36,11 @@ class TasksContainer(object):
         :param task_name: task name
         :return: the task's result
         """
+        logging.info(f"Getting task: {task_name}")
         if task_name in self._container:
+            logging.info("Success!")
             return self._container[task_name].result
+        logging.error(f"Could not find task: {task_name}")
         raise TaskNotFoundException(f"Could not find task: {task_name}")
 
     def is_task_done(self, task_name):
@@ -44,6 +49,10 @@ class TasksContainer(object):
         :param task_name: task's name
         :return: true if task is done
         """
+        logging.info(f"Checking if '{task_name}' is done")
         if task_name in self._container:
-            return self._container[task_name].running
+            res = self._container[task_name].running
+            logging.info(f"Result: {res}")
+            return res
+        logging.info(f"Could not find task: {task_name}")
         raise TaskNotFoundException(f"Could not find task: {task_name}")

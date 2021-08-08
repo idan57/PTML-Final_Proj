@@ -1,3 +1,4 @@
+import logging
 from threading import Thread
 
 
@@ -31,15 +32,19 @@ class Task(object):
         self.result = None
 
     def _task_execution(self):
+        logging.info(f"{self.name} is now running")
         if self._args:
             self.result = self._func(*self._args)
         else:
             self.result = self._func()
         self.running = False
+        logging.info(f"{self.name} is now done!")
 
     def start_task(self):
         """
         Start executing the task
         """
+        logging.info(f"Starting task: {self.name}")
         self._thread = Thread(target=self._task_execution)
         self._thread.start()
+        logging.info(f"Started task: {self.name}")

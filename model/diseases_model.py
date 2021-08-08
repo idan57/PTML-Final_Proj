@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pickle
 from collections import Counter
@@ -8,7 +9,6 @@ from typing import List
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -116,12 +116,12 @@ class DiseasesModel(object):
             for clasiffier in classifiers:
                 self.log_train_res(clasiffier)
         except PickledModelDoesNotExistException:
-            print("No models were trained in the past, starting training...")
+            logging.warning("No models were trained in the past, starting training...")
             self._tune()
             self._train()
 
     def _tune_one(self, classifier, classifier_name):
-        print(f"---------- Started tuning with {classifier_name} ----------")
+        logging.info(f"================== Started tuning with {classifier_name} ==================")
         grid_search_cv = RandomizedSearchCV(classifier,
                                             tune_options[classifier_name],
                                             cv=5,
@@ -129,7 +129,7 @@ class DiseasesModel(object):
                                             verbose=2,
                                             n_jobs=5)
         grid_search_cv.fit(self.x_train, self.y_train)
-        print(f"---------- Ended tuning with {classifier_name} ----------")
+        print(f"================== Ended tuning with {classifier_name} ==================")
         return grid_search_cv.best_params_, classifier_name
 
     def _tune(self):
@@ -161,7 +161,8 @@ class DiseasesModel(object):
                         del procs[i]
                         self._tuned[classifier_name] = best_res
                     except multiprocessing.TimeoutError:
-                        print(f"Still waiting... remaining {num_procs} processes.\nCurrently checked: {procs[i][0]}")
+                        logging.info(f"Still waiting... remaining {num_procs} processes.\n"
+                                     f"Currently checked: {procs[i][0]}")
                     i += 1
 
                 if num_procs == 0:
@@ -243,7 +244,7 @@ class DiseasesModel(object):
             with open(path, "wb") as pickled_file:
                 pickle.dump(model, pickled_file)
         else:
-            print(f"Requested pickling to {path} was canceled because the model is None")
+            logging.info(f"Requested pickling to {path} was canceled because the model is None")
 
     def _train(self):
         self.decision_tree_model = DecisionTreeClassifier(**self._tuned["DecisionTreeClassifier"])
@@ -282,20 +283,14 @@ class DiseasesModel(object):
 
         :param model: the trained model
         """
-        from sklearn.metrics import plot_confusion_matrix
         pred_train = model.predict(self.x_train)
         pred_test = model.predict(self.x_test)
 
-        print(f"Train accuracy for {model.__class__.__name__}: {accuracy_score(self.y_train, pred_train)}")
-        print(f"Test accuracy for {model.__class__.__name__}: {accuracy_score(self.y_test, pred_test)}")
+        logging.info(f"Train accuracy for {model.__class__.__name__}: {accuracy_score(self.y_train, pred_train)}")
+        logging.info(f"Test accuracy for {model.__class__.__name__}: {accuracy_score(self.y_test, pred_test)}")
 
-        print(f"Test Confusion Matrix for {model.__class__.__name__}:\n{confusion_matrix(self.y_test, pred_test)}")
-        fig, ax = plt.subplots(figsize=(30, 30))
-        display_labels = [f"{i}" for i in range(len(self.diseases))]
-        disp = plot_confusion_matrix(model, self.x_test, self.y_test, display_labels=display_labels, ax=ax,
-                                     cmap=plt.cm.Blues)
-        disp.ax_.set_title(f"Confusion Matrix - {model.__class__.__name__}")
-        fig.savefig(model.__class__.__name__)
+        logging.info(f"Test Confusion Matrix for {model.__class__.__name__}:\n"
+                     f"{confusion_matrix(self.y_test, pred_test)}")
 
     def symptoms_to_vals(self, symptoms: List):
         """
@@ -306,7 +301,7 @@ class DiseasesModel(object):
         :return: encoded symptoms
         :rtype: np.ndarray
         """
-        print(f"Received symptoms: {symptoms}")
+        logging.info(f"Received symptoms: {symptoms}")
         for i in range(len(symptoms)):
             if symptoms[i]:
                 symptoms[i] = self.symptoms_to_weights[symptoms[i]][f"Symptom_{i + 1}"]
@@ -330,9 +325,9 @@ class DiseasesModel(object):
 
         self.num_of_symptoms = len(self.symptoms_to_weights)
 
-        print(f"Symptoms: {self.symptoms_to_weights}")
-        print(f"Number of Symptoms: {self.num_of_symptoms}")
-        print(f"Max Weight: {self.max_weight}")
+        logging.info(f"Symptoms: {self.symptoms_to_weights}")
+        logging.info(f"Number of Symptoms: {self.num_of_symptoms}")
+        logging.info(f"Max Weight: {self.max_weight}")
 
     def _init_diseases(self):
         diseases = set()
@@ -342,8 +337,8 @@ class DiseasesModel(object):
         self.diseases = list(diseases)
         self.num_of_diseases = len(self.diseases)
 
-        print(f"Diseases: {self.diseases}")
-        print(f"Number of Diseases: {self.num_of_diseases}")
+        logging.info(f"Diseases: {self.diseases}")
+        logging.info(f"Number of Diseases: {self.num_of_diseases}")
 
     def _fit_data(self):
         encoder = LabelEncoder()
@@ -386,9 +381,9 @@ class DiseasesModel(object):
                 self.diseases_data.at[index, col] = val
 
         self.num_of_symptoms = len(self.symptoms_to_weights)
-        print(f"Symptoms: {self.symptoms_to_weights}")
-        print(f"Number of Symptoms: {self.num_of_symptoms}")
-        print("Finished fitting data...")
+        logging.info(f"Symptoms: {self.symptoms_to_weights}")
+        logging.info(f"Number of Symptoms: {self.num_of_symptoms}")
+        logging.info("Finished fitting data...")
 
     def _prepare_for_train(self):
         x = self.diseases_data[[f"Symptom_{i}" for i in range(1, 18)]]
