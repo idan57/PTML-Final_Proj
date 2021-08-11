@@ -105,9 +105,9 @@ class MainApp(Flask):
             sickness = self._tasks_container.get_task_result(task_name)
             description = None
             final_precautions = None
-            if sickness.result_value in self.diseases_precautions.descriptions:
+            if sickness.result_value.lower() in self.diseases_precautions.descriptions:
                 description = self.diseases_precautions.descriptions[sickness.result_value.lower()]
-            if sickness.result_value in self.diseases_precautions.precautions:
+            if sickness.result_value.lower() in self.diseases_precautions.precautions:
                 precautions = self.diseases_precautions.precautions[sickness.result_value.lower()]
                 final_precautions = []
                 num_of_precaution = 1
