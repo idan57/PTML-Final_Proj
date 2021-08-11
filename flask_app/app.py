@@ -11,15 +11,11 @@ from model.diseases_model import DiseasesModel
 from model.diseases_precautions import DiseasesPrecautions
 
 
-def run_something():
-    time.sleep(10)
-    res = TaskResult()
-    res.result_value = "You are all good!"
-    res.verdict = False
-    return res
-
-
 class MainApp(Flask):
+    """
+    This class is the main flask app for our project
+    """
+
     _tasks_container: TasksContainer
     model: DiseasesModel
 
