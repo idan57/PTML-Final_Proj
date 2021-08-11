@@ -10,7 +10,7 @@
     },
     "KNN": {
         "n_neighbors": 5,
-        "weights": "distance    `"
+        "weights": "distance"
     },
     "LogisticRegression": {
         "C": 10,
