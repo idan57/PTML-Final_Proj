@@ -129,15 +129,23 @@ class DiseasesModel(object):
                                             verbose=2,
                                             n_jobs=5)
         grid_search_cv.fit(self.x_train, self.y_train)
-        print(f"================== Ended tuning with {classifier_name} ==================")
+        logging.info(f"================== Ended tuning with {classifier_name} ==================")
         return grid_search_cv.best_params_, classifier_name
 
     def _tune(self):
         tuned_data_json = os.path.join(os.path.dirname(__file__), "tuned_data.json")
+        tuned_exists = False
         if os.path.isfile(tuned_data_json):
-            with open(tuned_data_json, "r") as f:
-                self._tuned = json.load(f)
-        else:
+            try:
+                with open(tuned_data_json, "r") as f:
+                    self._tuned = json.load(f)
+                tuned_exists = True
+            except Exception:
+                import traceback
+                logging.error(f"Failed to load the file {tuned_data_json}, failure below")
+                logging.error(traceback.format_exc())
+        if not tuned_exists:
+            logging.info(f"'{tuned_data_json}' file doesn't exist or its format is invalid")
             procs = []
             classifiers = {
                 "DecisionTreeClassifier": DecisionTreeClassifier(),
