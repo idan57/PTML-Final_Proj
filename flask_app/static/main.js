@@ -53,7 +53,7 @@ function AddSymptom() {
     let selected = document.getElementById("selectSyms").value;
     let symptoms = document.getElementById("symptoms");
     if (symptoms.value.split("\n").length > 17) {
-        alert("You are not allowed to add mor then 17 symptoms!");
+        alert("You are not allowed to add more then 17 symptoms!");
         return;
     }
     if (symptoms.value) {

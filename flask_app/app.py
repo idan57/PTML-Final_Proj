@@ -161,7 +161,7 @@ class MainApp(Flask):
                 symptoms = request.form["symptoms"].replace("\r", "").split("\n")
                 form = dict(request.form)
                 form["symptoms"] = ", ".join(symptoms)
-                symptoms = [symptom.replace(" ", "_") for symptom in symptoms]
+                symptoms = [symptom.replace(" ", "_").strip() for symptom in symptoms]
                 task = Task(name=request.form["name"], func=self.pred_model, args=(symptoms, ))
                 self._tasks_container.add_task(task=task)
                 logging.info("Submitted")
